@@ -18,7 +18,7 @@ alpha=0.3;
 beta=0.6;
 delta=0.75;
 k=200; % number of grids
-len= 0.01;
+len= 0.001; % length of grid, it is good to start from big value and then decrease
 start= len;
 state= start:len:start+len*(k-1); % different states:
 action= start:len:start+len*(k-1);
@@ -52,7 +52,7 @@ axis on
 xlabel("Current capital")
 ylabel("Value")
 title("Value Function on each state")
-print -djpeg -r600 hw3_value
+print -djpeg -r600 hw3_value_2
 
  
 %plot potential function of actions at each state 
@@ -60,10 +60,9 @@ for i=1:10:51
     plot(state, V_temp(i,:))
     hold on
 end
-
 xlabel("Next period capital decision")
 ylabel("Optimality function q(s,a)")
-lgd= legend("0.01","0.11","0.21","0.31","0.41","0.51")
+lgd= legend("0.001","0.011","0.021","0.031","0.041","0.051")
 title(lgd, "Current Captial")
 axis on
 grid on
@@ -73,7 +72,7 @@ hold off
 %     hold on
 % end
 % hold off
-print -djpeg -r600 hw3_control
+print -djpeg -r600 hw3_control_2
 
 
 %plot action function
@@ -88,5 +87,5 @@ print -djpeg -r600 hw3_control
     ylabel("Next period best action")
     title("Action Function on each state")
     axis square
-    print -djpeg -r600 hw3_action
+    print -djpeg -r600 hw3_action_2
 
