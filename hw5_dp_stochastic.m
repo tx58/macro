@@ -24,7 +24,7 @@ alpha=0.35; % the production rate: $f(k)=k^{\alpha}$
 beta=0.95; % the intertemporary patience
 delta=0.1; % capital deprecation rate
 k=100; % number of grids
-len= 0.1; % length of grid, it is good to start from big value and then decrease.
+len= 0.2; % length of grid, it is good to start from big value and then decrease.
 % In pratice, I set length to be 0.01 at the beginning, at find that the
 % optimal value at steady state should be within (0, 0.2), hence I set the
 % length to a lower value to cover this interval.
@@ -76,10 +76,15 @@ while epsilon> threshold % loop until $\epsilon$ converges
 end
 toc 
 fprintf("The loop ends in %d runs, the gap within final two loops are %f.", count, epsilon)
+save("solution.mat", "V","PI")
 
 %% Plot graph
 %% Plot the value function
-% $V(k)= \max_{k} log(s^{\alpha} - (1-\delta)s - k) + \beta V(k)$
+% $V(k,y)= \max_{k'} log(exp^{y}s^{\alpha} - (1-\delta)s - k') + \beta P(y'|y) V(k',y')$
+if exist('solution_1000.mat', 'file')
+    load solution_1000.mat
+end
+
 for i=1:7
     plot(state, V(:,i))
     hold on
@@ -99,6 +104,8 @@ end
 %of steady state, we increase the capital and vice versa. At steady state
 %it is stable. Hence the steady state is the crosspoint of the policy
 %function and the 45 degree line.
+
+
 for j=1:m
     i(j)=1;
     while i(j)~=PI(i(j),j) % By definition, this is the optimal decision
@@ -127,7 +134,7 @@ end
     hold off
     
     %% Plot potential function of actions in terms of action at each state 
-% $Q(s,a)= \max_{k} log(s^{\alpha} - (1-\delta)s - k) + \beta V(k)$
+% $Q(s,y,a)= \max_{k} log(exp^{y}s^{\alpha} - (1-\delta)s - k) + \beta V(k)$
 for i=11:20:91
     y= reshape(V_temp(i,4,:), size(state));
     plot(state, y)
@@ -135,8 +142,40 @@ for i=11:20:91
 end
 xlabel("Next period capital decision")
 ylabel("Optimality function q(s,a)")
-lgd= legend("0.001","0.031","0.061","0.091","0.121","0.151",'Location','southeast');
+lgd= legend("0.042","0.082","0.121","0.161","0.201","0.241",'Location','southeast');
 title(lgd, "Current State (Captial)")
 axis on
 grid on
 hold off
+
+%% Calcualte the model predicted output, capital, and investment
+% Start from a steady state, suppose all the decision is optimal (according to PI matrix)
+% Simulate the process for 100 times
+
+steady=repmat(1:1:k, m, 1); 
+index= ceil ((sum((steady.*(steady==PI')), 2)./ sum(((steady==PI')),2 )));  % By definition, this is the optimal decision
+% Here index denotes the steady state, we set it as the original value
+
+r=100;
+y(1)=4; % state variable y
+start=index(y(1));
+capital(150)=0; 
+output(150)=0;
+investment(150)=0;
+capital(1)=state(start); % state variable capital
+output(1)= exp(Y(y(1)+1))*capital(1)^alpha; % output according to production function
+investment(1)=  action(PI(start,y(1)))- (1-delta)*capital(1); % investment decision 
+
+
+for i=2:150
+    y(i)=sum( rand(1)>=( cumsum(P(y(i-1),:))))+1; % random process of state 
+    capital(i)= action(PI(index(y(i-1)),y(i-1))); % capital accumulation process
+    output(i)= exp(Y(y(i)+1))*capital(i)^alpha;
+    investment(i)=  action(PI(index(y(i)),y(i)))- (1-delta)*capital(i);
+end
+
+plot(1:i, investment)
+hold on
+plot(1:i, output)
+hold on
+plot(1:i, y)

@@ -63,18 +63,19 @@ while epsilon> threshold % loop until $\epsilon$ converges
     for s=1:k % value function iteration: get current value
         for j=1:m
             a_max=exp(Y(j+1))*state(s)^alpha+ (1-delta)*state(s); % Calculate feasible action sets: $0<=a<=state(s)^alpha+ (1-delta)*state(s)$
-            parfor a=1:min(k, ceil( (a_max-start)/len) )
+            for a=1:min(k, ceil( (a_max-start)/len) )
                 V_temp(s,j,a)= log( exp(Y(j+1))*state(s)^alpha+ (1-delta)*state(s) -action(a)) + beta*P(j,:)*V(a,:)'; 
                 % This directly comes from Bellman Optimality equation
             end
         end
         [V_new, PI]= max(V_temp, [], 3); % Calculate (1) New value function; (2) best action function.
     end
-    epsilon= ( max(max( abs(V_new -V)))); % Calculate the current error
+    epsilon= ( max(max( abs(V_new -V)))) % Calculate the current error
     V=V_new;
     count=count+1; % Count times the loop ends
 end
 toc 
-fprintf("The loop ends in %d runs, the gap within final two loops are %f.", count, epsilon)
+%fprintf("The loop ends in %d runs, the gap within final two loops are %f.", count, epsilon)
 
-save("solution.mat", "V","PI")
+save('solution.mat', 'V','PI', 'count', 'epsilon')
+save('solution_1000.mat')
