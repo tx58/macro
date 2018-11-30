@@ -162,7 +162,7 @@ title('marginal cost(j)')
 suptitle('Economic path for random technology shocks')
 print -djpeg -r600 q4_2.jpg
 
-end
+
 %% Change psipi and psiy in Taylor rule:
 psipi= 10; % taylor rule of inflation
 psiy= 0; % taylor rule of output
