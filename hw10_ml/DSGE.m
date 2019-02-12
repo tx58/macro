@@ -31,15 +31,36 @@ classdef DSGE
       G % transition coefficient of obeserved vars
       X2 % Observed sequence of variables (pi, output_gap, [interest rate])
       ye % efficient level output
+      yte
    end
    methods
+       function obj = setvalue(obj, THETA)
+           obj.sigma= THETA(1); % consumption elasiticity
+           obj.phi= THETA(6); % labor elasticity
+           obj.epsilon= THETA(8); % different goods bundle elasticity
+           obj.alpha= THETA(7); % production coefficient
+           obj.beta= THETA(2); % intertemporal discount factor
+           obj.theta= THETA(3); % ratio of firms which cannot change prices
+           obj.psipi= THETA(4); % taylor rule of inflation
+           obj.psiy= THETA(5); % taylor rule of output
+           obj.rhoa= THETA(10); % technology AR(1) coefficient
+           obj.sigmaa2= THETA(14)^2; % technology AR(1) variance
+           obj.rhoz= THETA(11); % demand shock AR(1) coeffeicient
+           obj.sigmaz2= THETA(15)^2; % demand shock AR(1) variance
+           obj.rhov= THETA(9); % policy shock AR(1) coefficient
+           obj.sigmav2= THETA(13)^2; % policy shock AR(1) variance
+           obj.rhou= THETA(12); % cost-push shock AR(1) coefficient
+           obj.sigmau2= THETA(16)^2; % cost-push shock AR(1) coefficient
+       end
+       
        function obj = init(obj)
           obj.rho= -log(obj.beta);  % linearied beta
           obj.psiya= (1+obj.phi)/(obj.sigma*(1-obj.alpha)+obj.phi+obj.alpha); % tech effect on output
           obj.lamda= (1-obj.theta)*(1-obj.beta*obj.theta)/obj.theta*(1-obj.alpha)/(1-obj.alpha+obj.alpha*obj.epsilon);
           obj.kappa= obj.lamda*(obj.sigma+(obj.phi+obj.alpha)/(1-obj.alpha));
           obj.gamma= 1/((1-obj.beta*obj.rhoa)*(obj.sigma*(1-obj.rhoa)+obj.psiy)+ obj.kappa*(obj.psipi-obj.rhoa));
-          obj.ye
+          obj.ye= (1-obj.alpha)*(0-log(1-obj.alpha))/...
+               ((1-obj.alpha)*obj.sigma+ obj.phi+ obj.alpha);
        end
        function obj = solve(obj) % Numerically find the solution
           A0=[1,0,0,0,0,0;
@@ -119,7 +140,7 @@ classdef DSGE
            end
            
            % 3. Consider the level too:
-           obj.ye= obj.psiya.*a+ (1-obj.alpha)*(0-log(1-obj.alpha))/...
+           obj.yte= obj.psiya.*a+ (1-obj.alpha)*(0-log(1-obj.alpha))/...
                ((1-obj.alpha)*obj.sigma+ obj.phi+ obj.alpha); % x=yt-yte -> yt=yte+x
            irn= obj.rho-obj.sigma*(1-obj.rhoa)*obj.psiya.*a;
            
@@ -158,12 +179,12 @@ classdef DSGE
            snapnow
        end
        
-       function output = kalmin(obj, X1, X2, name, str) % Use Kalmin filter to form estimates for latent vars
+       function output = kalmin(obj, X1, X2,  str, name) % Use Kalmin filter to form estimates for latent vars
            if nargin > 3
                
            else
                name="Kalmin filter on recovering shocks";
-               str="q2";
+               str="q3";
            end
            % Step0. Speicfy the model
            % Xtt(i)=M*Xtt(i-1)+ C*e(i-1)
@@ -208,7 +229,7 @@ classdef DSGE
            legend("Prediceted value","Realized value")
            xlabel("Time")
            title("Technology Shock")
-           
+           hold off
            subplot(2,2,2);
            plot(time, xtt(2,:))
            hold on
@@ -216,7 +237,7 @@ classdef DSGE
            legend("Prediceted value","Realized value")
            xlabel("Time")
            title("Demand Shock")
-           
+           hold off
            subplot(2,2,3);
            plot(time, xtt(3,:))
            hold on
@@ -224,7 +245,7 @@ classdef DSGE
            legend("Prediceted value","Realized value")
            xlabel("Time")
            title("Monetary Policy Shock")
-           
+           hold off
            subplot(2,2,4);
            plot(time, xtt(4,:))
            hold on
@@ -232,10 +253,58 @@ classdef DSGE
            legend("Prediceted value","Realized value")
            xlabel("Time")
            title("Cost-push Shock")
-           
+           hold off
            suptitle(name)
            print(str,'-djpeg','-r600')
            snapnow
+           close
+           
+       end
+       
+       function obj = solve2(obj) % Numerically find the solution
+          A0=[1,0,0,0,0,0;
+              0,1,0,0,0,0;
+              0,0,1,0,0,0;
+              0,0,0,1,0,0;
+              0,0,0,0,obj.beta,0;
+              0,0,0,0,1/obj.sigma,1];
+          A1=[obj.rhoa,0,0,0,0,0;
+              0,obj.rhoz,0,0,0,0;
+              0,0,obj.rhov,0,0,0;
+              0,0,0,obj.rhou,0,0;
+              0,0,0,1,1,-obj.kappa;
+              (1-obj.rhoa/obj.sigma),-(1-obj.rhoz)/obj.sigma,1/obj.sigma,obj.psiy/obj.kappa*obj.sigma,...
+              obj.psipi/obj.sigma,1+obj.psiy/obj.sigma];
+          C1=[sqrt(diag([obj.sigmaa2, obj.sigmaz2, obj.sigmav2, obj.sigmau2])); zeros(2,4)];
+          A=A0\A1;
+          obj.C=A0\C1;
+          obj.C=obj.C(1:4,1:4);
+          
+          cutoff =1; % cutoff of stable/unstable variables
+          egen= abs(eig(A)) < cutoff;
+          n1=4; % number of predetermined variables;
+          n2=2; % number of jump variables;
+          n= n1+n2; % total number of variables;
+          
+          % Complex generalized Schur decomposition
+          
+          [ZZ,TT]=schur(A); % Schur Decompostion to find A=UTU*
+          [Z,T] = ordschur(ZZ,TT,'UDI'); % Reorder to put unstable part on the RLS          
+          logcon = abs(diag(T)) <= cutoff ;
+          
+          if sum(logcon) <n1
+              warning("Too few stable roots: no stable solutions.");
+              obj.M= NaN; obj.G=NaN; J0=NaN;
+          elseif sum(logcon) >n1
+              warning("Too many stable roots: infinite number of stable solutions.");
+              obj.M= NaN; obj.G=NaN; J0=NaN;
+          end
+          
+          Z11=Z(1:n1,1:n1);
+          Z21=Z(n1+1:n,1:n1); % Divide Z into a block matrix [Z11; Z21]
+          
+          obj.M= real(A1(1:n1, 1:n1)); % X1(t+1)= MX1(t)+ e(t+1)
+          obj.G= real(Z21/Z11); % X2(t+1)= GX1(t)
        end
    end
 end

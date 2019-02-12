@@ -13,7 +13,7 @@
 % Other important notations:
 % 
 % * Transition: s=k
-% * State variable: s
+% * State variable: 
 % * Action varible: k
 % 
 

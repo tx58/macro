@@ -76,7 +76,7 @@ time=1:1:Model.period;
 plot(time, ytn)
 hold on
 plot(time, ytnhat)
-legend("Prediceted value","Realized value")
+legend("Realized value","Prediceted value")
 xlabel("Time")
 title("Natural level output")
 print -djpeg -r600 q4.jpg
@@ -86,7 +86,7 @@ Model= Model.solve2; % Numerically solve the model
 [X1, X2, ir, y, r]= Model.shock(v, 'q5', 'Path for 200 period random shocks');
 output2 = Model.kalmin(X1, X2, 'q5_1', "Predicted and Realized shocks");
 
-%% Question 5: Plot
+% Question 5: Plot
 pi=X2(1,:);
 y= X2(2,:)+Model.ye;
 a= X1(1,:);
@@ -130,7 +130,7 @@ hold on
 plot(time, ytnhat)
 hold on
 plot(time, ytnhat2)
-legend("Prediceted value in (4)","Predicted value in (5)","Realized value")
+legend("Realized value","Prediceted value in (4)","Predicted value in (5)")
 xlabel("Time")
 title("Natural level output")
 print -djpeg -r600 q5_2.jpg
