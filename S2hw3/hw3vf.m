@@ -82,33 +82,6 @@ hold off
 %print -djpeg -r600 -hw3_control_2
 
 
-%% Plot action function
-%This plots show the optimal capital decision. At any point on the left side
-%of steady state, we increase the capital and vice versa. At steady state
-%it is stable. Hence the steady state is the crosspoint of the policy
-%function and the 45 degree line.
-i=1;
-while i~=PI(i) % By definition, this is the optimal decision
-    i=i+1;
-end
-      
-fprintf("The optimal capital at the steady state is %f\n. The value at optimal capital is %f\n" ...
-    , i*len, V(i) )
-fprintf("If feasible, the planner will always choose steady state capital in the next period.")
-    plot(state, action(PI))
-    x=state;
-    y=state;
-    hold on
-    plot(x,y)
-    hold on
-    plot(x(i),y(i),'r*')
-    grid on
-    axis on
-    xlabel("Current capital")
-    ylabel("Next period best action")
-    title("Policy Function on each state")
-    axis square
-    print -djpeg -r600 hw3_action_2
 
 %% New value function: given higher technology A=1.01    
 
@@ -172,6 +145,41 @@ end
 
 fprintf("The loop ends in %d runs, the gap within final two loops are %f.", count, epsilon)
 
+%% Plot action function
+%This plots show the optimal capital decision. At any point on the left side
+%of steady state, we increase the capital and vice versa. At steady state
+%it is stable. Hence the steady state is the crosspoint of the policy
+%function and the 45 degree line.
+i=1;
+while i~=PI0(i) % By definition, this is the optimal decision
+    i=i+1;
+end
+
+j=find(PI'==1:1:N, 1 );
+
+fprintf("The optimal capital at the steady state is %f\n. The value at optimal capital is %f\n" ...
+    , i*len, V(i) )
+fprintf("If feasible, the planner will always choose steady state capital in the next period.")
+    plot(state, action(PI0), '-k')
+    x=state;
+    y=state;
+    hold on
+    plot(state, action(PI), '--k')
+    hold on
+    plot(x,y, '-.k')
+    hold on
+    plot(x(i),y(i),'r*')
+    hold on
+    plot(x(j),y(j),'rs')
+    grid on
+    axis on
+    xlabel("Current capital")
+    ylabel("Next period best action")
+    legend("Policy function A=1","Policy function A=1.01","45 degree line", 'location', 'southeast')
+    title("Policy Function on each state")
+    axis square
+    print -djpeg -r600 hw3_action_2
+
 
 %% Plot graph
 
@@ -206,25 +214,30 @@ for t=1:50
         x_path2(t+1) = 1.01*k_path2(t+1)^alpha- c_path2(t+1);
     end
 end
-subplot(3,2,1)
+ax1=subplot(3,2,1)
 plot(2:1:t, k_path1(2:t), 'b-', 2:1:t, ones(t-1,1)*k_path1(t), 'r--' )
 title("capital")
-subplot(3,2,3)
+ax2=subplot(3,2,3)
 plot(2:1:t, c_path1(2:t), 'b-', 2:1:t, ones(t-1,1)*c_path1(t), 'r--' )
 title("consumption")
-subplot(3,2,5)
+ax3=subplot(3,2,5)
 plot(2:1:t, x_path1(2:t), 'b-', 2:1:t, ones(t-1,1)*x_path1(t), 'r--' )
 title("investment")
 xlabel("period")
-subplot(3,2,2)
+ax4=subplot(3,2,2)
 plot(2:1:t, k_path2(2:t), 'b-', 2:1:t, ones(t-1,1)*k_path1(t), 'r--' )
 title("capital")
-subplot(3,2,4)
+ax5=subplot(3,2,4)
 plot(2:1:t, c_path2(2:t), 'b-', 2:1:t, ones(t-1,1)*c_path1(t), 'r--' )
 title("consumption")
-subplot(3,2,6)
+ax6=subplot(3,2,6)
 plot(2:1:t, x_path2(2:t), 'b-', 2:1:t, ones(t-1,1)*x_path1(t), 'r--' )
 title("investment")
 xlabel("period")
+linkaxes([ax1,ax4], 'xy')
+linkaxes([ax2,ax5], 'xy')
+linkaxes([ax3,ax6], 'xy')
+suptitle("Left: Permanent, Right: Temporary")
+
 print -djpeg -r600 hw3_transition
 

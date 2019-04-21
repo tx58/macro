@@ -56,40 +56,48 @@ hightech= hightech.setstart(0.85*hightech.k_star);
 hightech= hightech.shooting;
 
 t=100;
-subplot(3,2,1)
+ax1=subplot(3,2,1)
 plot(1:1:t, notpatient.k(1:t), 'b-', 1:1:t, ones(t,1)*notpatient.k_star, 'r--' )
 title("capital")
-subplot(3,2,3)
+ax2=subplot(3,2,3)
 plot(1:1:t, notpatient.c(1:t), 'b-', 1:1:t, ones(t,1)*notpatient.c_star, 'r--' )
 title("consumption")
-subplot(3,2,5)
+ax3=subplot(3,2,5)
 plot(1:1:t, notpatient.x(1:t), 'b-', 1:1:t, ones(t,1)*notpatient.x_star, 'r--' )
 title("investment")
 xlabel("period")
-subplot(3,2,2)
+ax4=subplot(3,2,2)
 plot(1:1:t, patient.k(1:t), 'b-', 1:1:t, ones(t,1)*patient.k_star, 'r--' )
 title("capital")
-subplot(3,2,4)
+ax5=subplot(3,2,4)
 plot(1:1:t, patient.c(1:t), 'b-', 1:1:t, ones(t,1)*patient.c_star, 'r--' )
 title("consumption")
-subplot(3,2,6)
+ax6=subplot(3,2,6)
 plot(1:1:t, patient.x(1:t), 'b-', 1:1:t, ones(t,1)*patient.x_star, 'r--' )
 title("investment")
 xlabel("period")
+linkaxes([ax1,ax4], 'xy')
+linkaxes([ax2,ax5], 'xy')
+linkaxes([ax3,ax6], 'xy')
+suptitle("Left: \beta=0.98, Right: \beta:0.99")
     print -djpeg -r600 hw3_patient
 
 %% Plot optimal path
-
-for i=1:1:200
-    ki= 8.5+i/50;
+k_star= notpatient.k_star;
+for i=1:1:100
+    ki= 9+i/50;
     lamda1(i)=(-delta*ki+A*ki^alpha)^-sigma;
     lamda2(i)= ((1-delta)*ki+A*ki^alpha-k_star)^-sigma;
+    lamda3(i)= findpath(notpatient, ki);
 end
-    plot(1:1:200, lamda1)
+    plot(1:1:100, lamda1, '--k')
     hold on
-    plot(1:1:200, lamda2)
-    label("Feasibility","Eular")
-    title("phase diagram")
+    plot(1:1:100, lamda2, '-.k')
+    hold on
+    plot(1:1:100, lamda3, '-k')
+    legend("Feasibility", "Eular", "saddle path")
+    title("phase diagram and saddle path")
+    print -djpeg -r600 phase_diagram_and_saddle_path
 
 
 

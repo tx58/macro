@@ -29,6 +29,7 @@ classdef gd
        k0
        V
        PI
+       
        % Some results we get from the paras:
     
    end
@@ -143,6 +144,36 @@ classdef gd
            fprintf("The loop ends in %d runs, the gap within final two loops are %f.", count, epsilon)
     
        end
+       
+       function lamda= findpath(obj, k0)
+           obj.c=zeros(obj.T,1);
+           obj.k=zeros(obj.T,1);
+           obj.lamda=zeros(obj.T,1);
+           obj.k(1)=k0;
+           cmax= obj.k(1)^obj.alpha+ obj.k(1)*(1-obj.delta);
+           cmin= 0;
+           count=1;
+           while ( abs((obj.k(obj.T)-obj.k_star)/obj.k_star)>10e-4 )
+               c0 = 1/2*(cmax+cmin);
+               obj.c(1)= c0;
+               for t=2:obj.T
+                   obj.k(t)= max(0, (1-obj.delta)*obj.k(t-1)+ ...
+                       obj.A*obj.k(t-1)^obj.alpha - obj.c(t-1)) ;
+                   obj.c(t)= max(0, obj.c(t-1)*(obj.beta*( (1-obj.delta) + ...
+                       obj.A*obj.alpha*obj.k(t)^(obj.alpha-1)))^(1/obj.sigma)) ;
+                   
+               end
+               if obj.k(obj.T) > obj.k_star && obj.c(obj.T) < obj.c_star
+                   cmin= c0;
+               else
+                   cmax= c0;
+               end
+               abs(obj.k(obj.T)-obj.k_star)
+               count=count+1;
+           end
+           lamda= c0^(-obj.sigma);
+       end
+       
    end
   
    
